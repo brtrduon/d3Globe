@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>Bitcoin d3.js Projection</title>
+        <link rel='stylesheet' type='text/css' href='style.css'>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="http://d3js.org/topojson.v1.min.js"></script>
+        <script src="http://d3js.org/queue.v1.min.js"></script>
+        <script src="/d3.v3.min.js"></script>
+    </head>
+    <body>
+        <h1>d3js</h1>
+        <script type='text/javascript'>
+            d3.json('https://blockchain.info/ticker', (data) => {
+                var currency = [];
+                var price = [];
+                // add currency name into an array
+                for(var i in data) {
+                    currency.push(i);
+                    // add bitcoin price into another array
+                    var crack = data[i];
+                    for(var j in crack) {
+                        price.push(crack[j]);
+                        // since all the values inside data are the same, if the loop encounters a duplicate value, then move onto the next currency value
+                        if (j === j) {
+                            break;
+                        }
+                    }
+                }
+                // probably don't need to do the loop with k variable. doing it just for show
+                var r = 0;
+                for(var k in currency) {
+                    console.log(`Currency: ${currency[k]}; price: ${price[r]}`)
+                    r++;
+                }
+
+                
+            });
+        </script>
+    </body>
+</html>
