@@ -10,3 +10,9 @@ svg {
     stroke: gray;
     stroke-opacity: 0.2;
 }
+.point {
+    fill: black;
+}
+.myPoint {
+    fill: blue;
+}
