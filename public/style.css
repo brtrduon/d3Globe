@@ -2,3 +2,11 @@
     height: 100%;
     width: 100%;
 }
+.land {
+    fill: green;
+}
+.graticule {
+    fill-opacity: 0;
+    stroke: gray;
+    stroke-opacity: 0.2;
+}
