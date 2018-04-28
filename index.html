@@ -1,9 +1,9 @@
 <html>
     <head>
         <title>Bitcoin d3.js Projection</title>
-        <link rel='stylesheet' type='text/css' href='style.css'>
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script src="http://d3js.org/topojson.v1.min.js"></script>
+        <link rel='stylesheet' href='style.css'>
     </head>
     <body>
         <h1>d3js</h1>
@@ -14,23 +14,21 @@
 
                 var width = 420
                 var height = 400
-                var projection = d3.geo.orthographic()
-                //var projection = d3.geo.albers()
-                //var projection = d3.geo.mercator()
+                // var projection = d3.geo.orthographic()
+                // var projection = d3.geo.albers()
+                var projection = d3.geo.mercator()
                     .scale(170)
                     .rotate([100,0,0])
                     .translate([width/2, height/2])
                     .clipAngle(90);
 
                 var path = d3.geo.path()
-                    .projection(projection);
+                .projection(projection);
 
-                var svg = d3.select('.myworld');
-
+                var svg = d3.select('.myworld')
                 svg.append("path")
-                    .datum(countries)
-                    .attr("d", path)
-                    .classed("land", true);
+                .attr("d", path(countries))
+                .classed("land", true);
             });
         </script>
     </body>
