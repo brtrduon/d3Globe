@@ -111,13 +111,29 @@ d3.json('world110.json', (err, world) => {
                 .text((d) => {
                     return d.properties.currency
                 });
+
+            
+
+            // for(var m in places.features) {
+            //     var temp = places.features[m];
+            //     for(var n in temp) {
+            //         console.log(temp[n].currency);
+            //     }
+            // }
+
+            console.log(result);
+
+            // for(var m in result) {
+            //     console.log(result[m])
+            // }
+
+
+
+
             // call the function below
             labels();
+            
         });
-
-        // test if we can get data from blockchain json
-        console.log(result);
-
     });
 
 
