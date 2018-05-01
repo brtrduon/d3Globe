@@ -56,7 +56,6 @@ d3.json('world110.json', (err, world) => {
     }
     
     function mouseup() {
-        console.log('pewp');
         if (m0) {
             mousemove();
             m0 = null;
@@ -71,27 +70,56 @@ d3.json('world110.json', (err, world) => {
         labels();
     }
 
-    // load json containing data for locations' names, coordinates, etc
-    d3.json('places.json', (err, places) => {
-        svg.append('g').attr('class', 'points')
-            .selectAll('text').data(places.features)
-            // d3 automatically detects coordinates within json file
-            .enter().append('path')
-            .attr('class', 'point')
-            // load point on globe on init
-            .attr('d', path);
+    // create new object from blockchain data
+    // might be doing more work than I should be doing
+    d3.json('https://blockchain.info/ticker', (err, data) => {
+        var currency = [];
+        var price = [];
+        
+        for(var i in data) {
+            currency.push(i);
+            
+            var holder = data[i];
+            for(var j in holder) {
+                price.push(holder[j]);
+                if (j === j) {
+                    break;
+                }
+            };
+        };
+        
+        var result = {};
+        currency.forEach((k, l) => {
+            result[k] = price[l];
+        });
+        
+        // load json containing data for locations' names, coordinates, etc
+        // need to make json pull inside blockchain's json pull in order to be able to access blockchain's data
+        d3.json('places.json', (err, places) => {
+            svg.append('g').attr('class', 'points')
+                .selectAll('text').data(places.features)
+                // d3 automatically detects coordinates within json file
+                .enter().append('path')
+                .attr('class', 'point')
+                // load point on globe on init
+                .attr('d', path);
+    
+            svg.append('g').attr('class', 'labels')
+                .selectAll('text').data(places.features)
+                .enter().append('text')
+                .attr('class', 'label')
+                .text((d) => {
+                    return d.properties.currency
+                });
+            // call the function below
+            labels();
+        });
 
-        svg.append('g').attr('class', 'labels')
-            .selectAll('text').data(places.features)
-            .enter().append('text')
-            .attr('class', 'label')
-            .text((d) => {
-                console.log(d.properties.currency);
-                return d.properties.name
-            });
-        // call the function below
-        labels();
+        // test if we can get data from blockchain json
+        console.log(result);
+
     });
+
 
     // labels function needs to be placed on outer scope for mouse events' accessibility
     function labels() {
