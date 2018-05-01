@@ -16,3 +16,8 @@ svg {
 .myPoint {
     fill: blue;
 }
+.label {
+    font-family: arial;
+    font-size: 14px;
+    font-weight: 600;
+}

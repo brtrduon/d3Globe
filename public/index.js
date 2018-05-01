@@ -24,24 +24,6 @@ d3.json('world110.json', (err, world) => {
         .datum(countries)
         .attr("d", path)
         .classed("land", true);
-    
-    // navigator.geolocation.getCurrentPosition(function(pos){
-    //     console.log(pos);
-    //     var coords = [pos.coords.longitude, pos.coords.latitude];
-    //     var xy = projection(coords);
-    //     svg.append("circle")
-    //         .datum(coords)
-    //         .classed('myPoint', true)
-    //         .attr({
-    //             cx: (d) => {
-    //                 return projection(d)[0]
-    //             },
-    //             cy: (d) => {
-    //                 return projection(d)[1]
-    //             },
-    //             r: 3,
-    //         });
-    // });
 
     // for rotating and zooming into the globe
     var zoom = d3.geo.zoom()
@@ -66,8 +48,10 @@ d3.json('world110.json', (err, world) => {
     d3.json('places.json', (err, places) => {
         svg.append('g').attr('class', 'points')
             .selectAll('text').data(places.features)
+            // d3 automatically detects coordinates within json file
             .enter().append('path')
             .attr('class', 'point')
+            // load point on globe on init
             .attr('d', path);
 
         svg.append('g').attr('class', 'labels')
@@ -77,5 +61,32 @@ d3.json('world110.json', (err, world) => {
             .text((d) => {
                 return d.properties.name
             });
+        
+        // calling the function below
+        labels();
+
+        function labels() {
+            var center = projection.invert([width / 2, height / 2]);
+            var arc = d3.geo.greatArc();
+          
+            svg.selectAll(".label")
+                .attr("text-anchor", (d) => {
+                    var x = projection(d.geometry.coordinates)[0];
+                    return x < width / 2-20 ? "end" :
+                        x < width / 2+20 ? "middle" :
+                        "start";
+                })
+                .attr("transform", (d) => {
+                    var location = projection(d.geometry.coordinates);
+                    var x = location[0];
+                    var y = location[1];
+                    var offset = x < width / 2 ? -5 : 5;
+                    return `translate(${x+offset},${y-2})`;
+                })
+                .style("display", (d) => {
+                    var d = arc.distance({source: d.geometry.coordinates, target: center});
+                    return (d > 1.57) ? 'none' : 'inline';
+                })
+          }
     });
 });
