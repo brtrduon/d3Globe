@@ -86,13 +86,14 @@ d3.json('world110.json', (err, world) => {
             .enter().append('text')
             .attr('class', 'label')
             .text((d) => {
+                console.log(d.properties.currency);
                 return d.properties.name
             });
         // call the function below
         labels();
     });
 
-    // labels function needs to be placed on an outer scope for mouse events accessibility
+    // labels function needs to be placed on outer scope for mouse events' accessibility
     function labels() {
         var center = projection.invert([width / 2, height / 2]);
         var arc = d3.geo.greatArc();
