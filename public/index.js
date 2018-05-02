@@ -112,40 +112,33 @@ d3.json('world110.json', (err, world) => {
                     return d.properties.currency
                 });
 
-            
-
+            // create "artificial one-to-one relationship" with places.json and blockchain API
             var temp;
             var temp1;
             var temp2;
 
             for(var m in places.features) {
                 temp = places.features[m];
-                // console.log(temp);
                 for(var n in temp) {
-                    // console.log(temp[n].price);
                     temp1 = temp[n].currency;
+
+                    // loop through modified blockchain object
                     for(var o in result) {
-                        // console.log(o);
+                        // if the two currencies are the same, then set the currency price of the remote json as the currency price of blockchain
                         if (o === temp1) {
                             temp2 = result[o];
-                            // console.log(temp2);
                             break;
                         }
                     }
                     temp[n].price = temp2;
-                    // console.log(temp[n].price);
                 }
             }
             console.log(places.features);
 
 
 
-
-
-
             // call the function below
             labels();
-            
         });
     });
 
