@@ -114,21 +114,30 @@ d3.json('world110.json', (err, world) => {
 
             
 
+            var temp;
+            var temp1;
+            var temp2;
+
             for(var m in places.features) {
-                var temp = places.features[m];
+                temp = places.features[m];
+                // console.log(temp);
                 for(var n in temp) {
-                    // console.log(temp[n].currency);
-                    for(var m in result) {
-                        // console.log(m);
-                        // console.log(result[m]);
-                        if (m == temp[n].currency) {
-                            console.log(result[m]);
-                            // console.log('crack');
+                    // console.log(temp[n].price);
+                    temp1 = temp[n].currency;
+                    for(var o in result) {
+                        // console.log(o);
+                        if (o === temp1) {
+                            temp2 = result[o];
+                            // console.log(temp2);
+                            break;
                         }
                     }
-
+                    temp[n].price = temp2;
+                    // console.log(temp[n].price);
                 }
             }
+            console.log(places.features);
+
 
 
 
