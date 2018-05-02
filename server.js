@@ -6,7 +6,11 @@ const http = require('http');
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/charts.html');
+});
+
+app.get('/globe', (req, res) => {
+    res.sendFile(__dirname + '/globe.html');
 });
 
 const port = process.env.PORT || 8000;

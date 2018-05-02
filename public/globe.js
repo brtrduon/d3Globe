@@ -112,6 +112,8 @@ d3.json('world110.json', (err, world) => {
                     return d.properties.currency
                 });
 
+            
+
             // create "artificial one-to-one relationship" with places.json and blockchain API
             var temp;
             var temp1;
@@ -134,8 +136,6 @@ d3.json('world110.json', (err, world) => {
                 }
             }
             console.log(places.features);
-
-
 
             // call the function below
             labels();
