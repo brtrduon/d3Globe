@@ -1,45 +1,55 @@
 // view/graph dimensions (?)
-
 var m = [20, 20, 30, 20];
-// I have no idea what the var above is for
+// I have no idea what var m is for
 var width = 960 - m[1] - m[3];
 var height = 500 - m[0] - m[2];
-
-var x;
-var y;
+var k = 1;
+var n = 0;
 var duration = 1500;
 var delay = 500;
-
 var color = d3.scale.category10();
+var color1 = d3.scale.ordinal()
+    .range(['#c6dbef', '#9ecae1', '#6baed6']);
+
+// initialize some stuff
+var self;
+var x;
+var x1;
+var y;
+var g;
+var t;
+var stack;
+var symbols;
+// might need to change the name of 'var symbols' to 'currency' or whatever it is that i am using
 
 var svg = d3.select('svg')
     .attr('width', width + m[1] + m[3])
     .attr('height', height + m[0] + m[2])
     .append('g')
-        .attr('transform', `translate(${m[3]}, ${m[0]})`);
+    .attr(`transform`, `translate(${m[3]}, ${m[0]})`);
 
-// initialize stuff
-var bitcoin;
-var symbols;
+var pie = d3.layout.pie()
+    .value((d) => {
+        return d.sumPrice;
+    });
+
+var arc = d3.svg.arc();
 
 var line = d3.svg.line()
     .interpolate('basis')
     .x((d) => {
         return x(d.time);
-        // might need to change 'time' for x axis if nothing is displaying on graph
     })
     .y((d) => {
         return y(d.average);
-        // same thing as x axis
     });
 
 var axis = d3.svg.line()
     .interpolate('basis')
     .x((d) => {
-        return x(d.date);
+        return x(d.time);
     })
     .y(height);
-    // not sure why I need this AND var line
 
 var area = d3.svg.area()
     .interpolate('basis')
@@ -49,7 +59,7 @@ var area = d3.svg.area()
     .y1((d) => {
         return y(d.average);
     });
-    // same thing here as the stuff above
+
 
 
 
@@ -86,17 +96,7 @@ d3.json('https://blockchain.info/ticker', (err, data) => {
     for(var keys in result) {
         d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${keys}?period=monthly&?format=json`, (err, data) => {
             console.log(data);
-
-            var parse = d3.time.format('%b %Y').parse;
-            // i have no idea what the var above does
-
             
         });
     };
-
-    // for(var m in realTime) {
-    //     d3.json(realTime[m], (err, data) => {
-    //         console.log(data);
-    //     });
-    // };
 });
