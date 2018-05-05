@@ -14,7 +14,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
         // will probably change these colors to something to better suit me
 
     // initialize variables to be used later
-    var self;
+    // var self;
     var x;
     var x1;
     var y;
@@ -101,8 +101,9 @@ window.bitcoin = window.bitcoin || (function(d3) {
                 
                 
                 // need for loop here to be able to load all historical bitcoin data based on currencies being used
-                for(var keys in result) {
-                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${keys}?period=monthly&?format=json`, (err, data) => {
+                for(var m in currency) {
+                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[m]}?period=monthly&?format=json`, (err, data) => {
+                        console.log(currency[m]);
                         console.log(data);
                     });
                 };
