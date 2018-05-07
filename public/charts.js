@@ -21,8 +21,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
     var g;
     var t;
     var stack;
-    var symbols;
-    // might need to change the name of 'var symbols' to 'currency' or whatever it is that i am using
+    var currencies;
 
     // init d3 stuff to be loaded (?) 
     var svg = d3.select('svg')
@@ -67,7 +66,19 @@ window.bitcoin = window.bitcoin || (function(d3) {
     // we call the function towards the bottom of this file
     return {
         overlap: () => {
+            g = svg.selectAll('.currency');
 
+            line.y((d) => {
+                return y(d.average0 + d.average);
+            });
+
+            g.select('.line')
+                .attr('d', (d) => {
+                    return line(d.values);
+                    // where is/are values being pulled from...?
+                });
+            
+            
         },
 
 
@@ -78,9 +89,8 @@ window.bitcoin = window.bitcoin || (function(d3) {
         run: () => {
             // recycling some stuff from globe.js to loop through currency used
             // will need to modify .js files once i make the whole shabangabang into a single page app
-            d3.json('https://blockchain.info/ticker', (err, data) => {
+            d3.json('https://blockchain.info/ticker', (data) => {
                 let currency = [];
-                // var price = [];
                 
                 for(var i in data) {
                     currency.push(i);
@@ -91,8 +101,48 @@ window.bitcoin = window.bitcoin || (function(d3) {
                 for(let m = 0; m < currency.length; m++) {
                     // need to put loop in this format to match up the console log currencies and its respective data
                     d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[m]}?period=monthly&?format=json`, (err, data) => {
-                        console.log(currency[m]);
-                        console.log(data);
+                        // console.log(currency[m]);
+                        // console.log(data);
+
+                        // nest average price by currency
+                        // ???
+                        currencies = d3.nest()
+                            .key((d) => {
+                                return d.currency
+                            })
+                            .entries(data);
+                        
+                        // parse dates and average value
+                        // assume that values are sorted by date
+                        let parse = d3.time.format('%b %y').parse;
+
+                        currencies.forEach((s) => {
+                            s.values.forEach((d) => {
+                                d.time = parse(d.time);
+                                d.average = +d.average;
+                            });
+
+                            // compute the max average per currency
+                            s.maxAverage = d3.max(s.values, (d) => {
+                                return d.average;
+                            });
+
+                            s.sumAverage = d3.sum(s.values, (d) => {
+                                return d.average;
+                            });
+                        });
+
+                        // sort by max average, desc
+                        currencies.sort((a, b) => {
+                            return b.maxAverage - a.maxAverage;
+                        });
+
+                        g = svg.selectAll('g')
+                            .data(currencies)
+                            .enter().append('g')
+                            .attr('class', 'currency');
+
+                        setTimeout(this.lines, duration);
                     });
                 };
             });
