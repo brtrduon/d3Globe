@@ -253,6 +253,74 @@ window.bitcoin = window.bitcoin || (function(d3) {
             setTimeout(this.transposeBar, duration + currencies[0].values.length * 10 + delay);
         },
 
+        transposeBar: () => {
+            stack = d3.layout.stack()
+                .x((d, i) => {
+                    // why are 2 parameters being used if we're only returning 1...
+                    return i;
+                })
+                .y((d) => {
+                    return d.average;
+                })
+                .out((d, y0, y) => {
+                    d.average0 = y0;
+                });
+
+            x.domain(currencies.map((d) => {
+                return d.key;
+            }))
+                .rangeRoundBands([0, width], 0.2);
+
+            y.domain([0, d3.max(currencies.map((d)=> {
+                return d3.sum(d.values.map((d) => {
+                    return d.average;
+                    // why is there a nested return within a return...?
+                }));
+            }))]);
+
+            stack(d3.zip.apply(null, currencies.map((d) => {
+                // d3.zip returns an array of arrays, where the ith array contains the ith element from each of the argument arrays
+                return d.values;
+            })));
+
+            g = svg.selectAll('.currency');
+
+            t = g.transition()
+                .duration(duration / 2);
+
+            t.selectAll('rect')
+                .delay((d, i) => {
+                    return i * 10;
+                })
+                .attr('y', (d) => {
+                    return y(d.average0 + d.average) - 1;
+                })
+                .attr('height', (d) => {
+                    return height - y(d.average) + 1;
+                })
+                .attr('x', (d) => {
+                    return x(d.currency);
+                })
+                .attr('width', x.rangeBand())
+                .style('stroke-opacity', 1e-6);
+
+            t.select('text')
+                .attr('x', 0)
+                .attr('transform', (d) => {
+                    return `translate(${x(d.key) + x.rangeBand() / 2}, ${height})`;
+                })
+                .attr('dy', '1.31em')
+                .each('end', () => {
+                    d3.select(this).attr('x', null).attr('text-anchor', 'middle');
+                });
+
+            svg.select('line').transition()
+                .duration(duration)
+                .attr('x2', width);
+
+            setTimeout(this.donut, duration / 2 + currencies[0].values.length * 10 + delay);
+        },
+
 
 
 
