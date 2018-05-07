@@ -120,7 +120,6 @@ window.bitcoin = window.bitcoin || (function(d3) {
                 // maybe days in a month?
                 .attr('transform', (d) => {
                     d = d.values[d.values.length - 1];
-
                     return `translate(${width - 60}, ${y(d.average)})`;
                 });
 
@@ -135,10 +134,127 @@ window.bitcoin = window.bitcoin || (function(d3) {
                 .duration(duration)
                 .style('stroke-opacity', 1);
 
-                setTimeout(this.groupedBar, duration + delay);
+            setTimeout(this.groupedBar, duration + delay);
         },
 
-        
+        groupedBar: () => {
+            x = d3.scale.ordinal()
+                .domain(currencies[0].values.map((d) => {
+                    return d.date;
+                }))
+                .rangeBands([0, width - 60], 0.1);
+                // I'm assuming that 0.1 is the opacity?
+                // rangeBand is d3's auto calculation for space available, bar width, inner/outer padding
+
+            x1 = d3.scale.ordinal()
+                .domain(currencies.map((d) => {
+                    return d.key;
+                }))
+                .rangeBands([0, x.rangeBand()]);
+
+            g = svg.selectAll('currency');
+
+            t = g.transition()
+                .duration(duration);
+
+            t.select('.line')
+                .style('stroke-opacity', 1e-6)
+                .remove();
+
+            t.select('.area')
+                .style('full-opacity', 1e-6)
+                .remove();
+
+            g.each((p, j) => {
+                // wonder why p and j are selected as parameters
+                d3.select(this).selectAll('rect')
+                    .data((d) => {
+                        return d.values;
+                    })
+                    .enter().append('rect')
+                    .attr('x', (d) => {
+                        return x(d.time) + x1(p.key);
+                    })
+                    .attr('y', (d) => {
+                        return y(d.average);
+                    })
+                    .attr('width', x1.rangeBand())
+                    .attr('height', (d) => {
+                        return height - y(d.average);
+                    })
+                    .style('fill', color(p.key))
+                    // key will be defined in explodeArcTween
+                    .style('fill-opacity', 1e-6)
+                    .transition()
+                    .duration(duration)
+                    .style('fill-opacity', 1);
+            });
+
+            setTimeout(this.stackedBar, duration + delay);
+        },
+
+        stackedBar: () => {
+            stack = d3.layout.stack()
+                .values((d) => {
+                    return d.values;
+                })
+                .x((d) => {
+                    return d.time;
+                })
+                .y((d) => {
+                    return d.average;
+                })
+                .out((d, y0, y) => {
+                    d.average0 = y0;
+                })
+                .order('reverse');
+
+            x.rangeRoundBands([0, width - 60], 0.1);
+            g = svg.selectAll('.currency');
+            stack(currencies);
+
+            y.domain([0, d3.max(currencies[0].values.map((d) => {
+                return d.average + d.average0;
+            }))])
+                .range([height, 0]);
+
+            t = g.transition()
+                .duration(duration / 2);
+                // I don't understand why duration is divided in 2 here
+                // don't see any difference when not dividing the duration in d3showreel
+
+            t.select('text')
+                .delay(currencies[0].values.length * 10)
+                .attr('transform', (d) => {
+                    d = d.values[d.values.length - 1];
+                    return `translate(${width - 60}, ${y(d.average / 2 + d.average0)})`;
+                });
+
+            t.selectAll('rect')
+                .delay((d, i) => {
+                    return i * 10;
+                })
+                .attr('y', (d) => {
+                    return height - y(d.average);
+                })
+                .each('end', () => {
+                    d3.select(this)
+                        .style('stroke', '#fff')
+                        .style('stroke-opacity', 1e-6)
+                        .transition()
+                        .duration(duration / 2)
+                        .attr('x', (d) => {
+                            return x(d.time);
+                        })
+                        .attr('width', x.rangeBand())
+                        .style('stroke-opacity', 1);
+                });
+            
+            setTimeout(this.transposeBar, duration + currencies[0].values.length * 10 + delay);
+        },
+
+
+
 
 
 
