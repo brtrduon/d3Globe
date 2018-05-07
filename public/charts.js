@@ -79,29 +79,17 @@ window.bitcoin = window.bitcoin || (function(d3) {
             // recycling some stuff from globe.js to loop through currency used
             // will need to modify .js files once i make the whole shabangabang into a single page app
             d3.json('https://blockchain.info/ticker', (err, data) => {
-                var currency = [];
-                var price = [];
+                let currency = [];
+                // var price = [];
                 
                 for(var i in data) {
                     currency.push(i);
-                    
-                    var holder = data[i];
-                    for(var j in holder) {
-                        price.push(holder[j]);
-                        if (j === j) {
-                            break;
-                        }
-                    };
                 };
-                
-                var result = {};
-                currency.forEach((k, l) => {
-                    result[k] = price[l];
-                });
                 
                 
                 // need for loop here to be able to load all historical bitcoin data based on currencies being used
-                for(var m in currency) {
+                for(let m = 0; m < currency.length; m++) {
+                    // need to put loop in this format to match up the console log currencies and its respective data
                     d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[m]}?period=monthly&?format=json`, (err, data) => {
                         console.log(currency[m]);
                         console.log(data);
