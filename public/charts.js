@@ -65,6 +65,11 @@ window.bitcoin = window.bitcoin || (function(d3) {
     // return stuff that we want to be loaded (since the first line of code is a function)
     // we call the function towards the bottom of this file
     return {
+        // overlap will be called in streamGraph function
+        // i.e. nothing inserted inside overlap function is being utilized atm
+        // let's pray that I don't make a typo somewhere along the way
+
+        // where is 'values' being defined?
         overlap: () => {
             g = svg.selectAll('.currency');
 
@@ -78,8 +83,62 @@ window.bitcoin = window.bitcoin || (function(d3) {
                     // where is/are values being pulled from...?
                 });
             
-            
+            y.domain([0, d3.max(currencies.map((d) => {
+                return d.maxAverage;
+            }))])
+                .range([height, 0]);
+
+            area.y0(height)
+                .y1((d) => {
+                    return y(d.average);
+                });
+
+            line.y((d) => {
+                return y(d.average);
+            });
+
+            t = g.transition()
+                // I am assuming transition is a built-in d3 function
+                .duration(duration);
+
+            t.select('line')
+                .style('stroke-opacity', 1)
+                // I suppose I can do this via CSS also
+                .attr('d', (d) => {
+                    return line(d.values);
+                });
+
+            t.select('area')
+                .style('fill-opacity', 0.5)
+                .attr('d', (d) => {
+                    return area(d.values);
+                });
+
+            t.select('text')
+                .attr('dy', '.31em')
+                // I do not know what the above attributes are
+                // maybe days in a month?
+                .attr('transform', (d) => {
+                    d = d.values[d.values.length - 1];
+
+                    return `translate(${width - 60}, ${y(d.average)})`;
+                });
+
+            svg.append('line')
+                .attr('class', 'line')
+                .attr('x1', 0)
+                .attr('x2', width - 60)
+                .attr('y1', height)
+                .attr('y2', height)
+                .style('stroke-opacity', 1e-6)
+                .transition()
+                .duration(duration)
+                .style('stroke-opacity', 1);
+
+                setTimeout(this.groupedBar, duration + delay);
         },
+
+        
 
 
 
