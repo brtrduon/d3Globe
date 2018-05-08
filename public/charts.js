@@ -32,7 +32,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
 
     var pie = d3.layout.pie()
         .value((d) => {
-            return d.sumPrice;
+            return d.sumAverage;
         });
 
     var arc = d3.svg.arc();
@@ -321,6 +321,112 @@ window.bitcoin = window.bitcoin || (function(d3) {
             setTimeout(this.donut, duration / 2 + currencies[0].values.length * 10 + delay);
         },
 
+        donutArcTween: (d) => {
+            // animation function?
+            var donutPath = d3.select(this);
+            var donutText = d3.select(this.parentNode.appendChild(this.previousSibling));
+            var x0 = x(d.data.key);
+            var y0 = height - y(d.date.sumAverage);
+
+            return (t) => {
+                var r = height / 2 / Math.min(1, t + 1e-3);
+                var a = Math.cos(t * Math.PI / 2);
+                var xx = (-r + (a) * (x0 + x.rangeBand()) + (1 - a) * (w + h) / 2);
+                var yy = ((a) * height + (1 - a) * height / 2);
+                var f = {
+                    innerRadius: r - x.rangeBand() / (2 - a),
+                    outerRadius: r,
+                    startAngle: a * (Math.PI / 2 - y0 / r) + (1 - a) * d.startAngle,
+                    endAngle: a * (Math.PI / 2) + (1 - a) * d.endAngle
+                };
+
+                donutPath.attr('transform', `translate(${xx}, ${yy})`);
+                donutPath.attr('d', arc(f));
+                donutText.attr('transform', `translate(${arc.centroid(f)})translate(${xx}, ${yy})rotate(${((f.startAngle + f.endAngle) / 2 + 3 * Math.PI / 2) * 180 / Math.PI})`);
+            };
+        },
+
+        donut: () => {
+            g = svg.selectAll('.currency');
+            g.selectAll('rect').remove();
+
+            g.append('path')
+                .style('fill', (d) => {
+                    return color(d.key);
+                })
+                .data(() => {
+                    return pie(currencies);
+                })
+                .transition()
+                .duration(duration)
+                .tween('arc', this.donutArcTween);
+
+            g.select('text').transition()
+                .duration(duration)
+                .attr('dy', '.31em');
+
+            svg.select('line').transition()
+                .duration(duration)
+                .attr('y1', 2 * height)
+                .attr('y2', 2 * height)
+                .remove();
+
+            setTimeout(this.donutExplode, duration + delay);
+        },
+
+        explodeArcTween: (b) => {
+            return (b) => {
+                var explodeArcPath = d3.select(this);
+                var explodeArcText = d3.select(this.nextSibling);
+                var i = d3.interpolate(a, b);
+                var key;
+
+                for(key in b) {
+                    if (b.hasOwnProperty(key)) {
+                        // update data
+                        a[key] = b[key]
+                    };
+                };
+
+                return (t) => {
+                    var a = i(t);
+
+                    explodeArcPath.attr('d', arc(a));
+                    explodeArcText.attr('transform', `translate(${arc.centroid(a)})translate(${width / 2}, ${height / 2})rotate(${((a.startAngle + a.endAnggle) / 2 + 3 * Math.PI / 2) * 180 / Math.PI})`);
+                };
+            };
+        },
+
+        transitionExplode: (d, i) => {
+            var r0a = height / 2 - x.rangeBand() / 2;
+            var r1a = height / 2;
+            var r0b = 2 * height - x.rangeBand() / 2;
+            var r1b = 2 * height;
+
+            d.innerRadius = r0a;
+            d.outerRadius = r1a;
+
+            d.select(this).transition()
+                .duration(duration / 2)
+                .tween('arc', this.explodeArcTween({
+                    innerRadius: r0b,
+                    outerRadius: r1b
+                }));
+        },
+
+        donutExplode: () => {
+            svg.selectAll('.symbol path')
+                .each(this.transitionExplode);
+
+            setTimeout(() => {
+                svg.selectAll('*').remove();
+                svg.selectAll('g').data(currencies)
+                    .enter().append('g')
+                    .attr('class', 'currency');
+                this.lines();
+            }, duration);
+        },
+
 
 
 
@@ -335,17 +441,17 @@ window.bitcoin = window.bitcoin || (function(d3) {
             d3.json('https://blockchain.info/ticker', (data) => {
                 let currency = [];
                 
-                for(var i in data) {
-                    currency.push(i);
+                for(var ii in data) {
+                    currency.push(ii);
                 };
                 
                 
                 // need for loop here to be able to load all historical bitcoin data based on currencies being used
-                for(let m = 0; m < currency.length; m++) {
+                for(let mm = 0; mm < currency.length; mm++) {
                     // need to put loop in this format to match up the console log currencies and its respective data
-                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[m]}?period=monthly&?format=json`, (err, data) => {
-                        // console.log(currency[m]);
-                        // console.log(data);
+                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[mm]}?period=monthly&?format=json`, (err, data) => {
+                        console.log(currency[mm]);
+                        console.log(data);
 
                         // nest average price by currency
                         // ???
