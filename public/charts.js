@@ -427,6 +427,171 @@ window.bitcoin = window.bitcoin || (function(d3) {
             }, duration);
         },
 
+        streamGraph: () => {
+            stack = d3.layout.stack()
+                .values((d) => {
+                    return d.values;
+                })
+                .x((d) => {
+                    return d.time;
+                })
+                .y((d) => {
+                    return d.average;
+                })
+                .out((d, y0, y) => {
+                    d.average0 = y0;
+                })
+                .order('reverse')
+                .offset('wiggle');
+                // what is wiggle offset?
+
+            stack(currencies);
+
+            line.y((d) => {
+                return y(d.average0);
+            });
+
+            t = svg.selectAll('.currency').transition()
+                .duration(duration);
+
+            t.select('path.area')
+                .attr('d', (d) => {
+                    return area(d.values);
+                });
+
+            t.select('path.line')
+                .style('stroke-opacity', 1e-6)
+                .attr('d', (d) => {
+                    return line(d.values);
+                });
+
+            t.select('text')
+                .attr('transform', (d) => {
+                    d = d.values[d.values.length - 1];
+                    return `translate${(w - 60)}, ${y(d.average / 2 + d.average0)})`;
+                });
+
+            setTimeout(this.overlap, duration + delay);
+        },
+
+        stackedArea: () => {
+            stack = d3.layout.stack()
+                .values((d) => {
+                    return d.values;
+                })
+                .x((d) => {
+                    return d.time;
+                })
+                .y((d) => {
+                    return d.average;
+                })
+                .out((d, y0, y) => {
+                    d.average0 = y0;
+                })
+                .order('reverse');
+
+            stack(currencies);
+
+            y.domain([0, d3.max(currencies[0].values.map((d) => {
+                return d.average + d.average0;
+            }))])
+                .range([height, 0]);
+
+            line.y((d) => {
+                return y(d.average0);
+            });
+
+            area.y0((d) => {
+                return y(d.average0);
+            })
+                .y1((d) => {
+                    return y(d.average0 + d.average);
+                });
+
+            t = svg.selectAll('.currency').transition()
+                .duration(duration)
+                .attr('transform', 'translate(0, 0)')
+                .each('end', (d) => {
+                    d3.select(this).attr('transform', null);
+                });
+
+            t.select('path.area')
+                .attr('d', (d) => {
+                    return area(d.values);
+                });
+
+            t.select('path.line')
+                .style('stroke-opacity', (d, i) => {
+                    return i < 3 ? 1e-6 : 1;
+                })
+                .attr('d', (d) => {
+                    return line(d.values);
+                });
+            
+            t.select('text')
+                .attr('transform', (d) => {
+                    d = d.values[d.values.length - 1];
+                    return `translate(${(w - 60)}, ${y(d.average / 2 + d.average0)})`;
+                });
+
+            setTimeout(this.streamGraph, duration + delay);
+        },
+
+        areas: () => {
+            g = svg.selectAll('.currency');
+
+            axis.y(height / 4 - 21);
+
+            g.select('.line')
+                .attr('d', (d) => {
+                    return axis(d.values);
+                });
+
+            g.each((d) => {
+                y.domain([0, d.maxAverage]);
+
+                d3.select(this).select('.line').transition()
+                    .duration(duration)
+                    .style('stroke-opacity', 1)
+                    .each('end', () => {
+                        d3.select(this).style
+                        ('stroke-opacity', null);
+                    });
+
+                d3.select(this).selectAll('.area')
+                    .filter((d, i) => {
+                        return i;
+                    })
+                    .transition()
+                    .duration(duration)
+                    .style('fill-opacity', 1e-6)
+                    .attr('d', area(d.values))
+                    .remove();
+
+                d3.select(this).selectAll('area')
+                    .filter((d, i) => {
+                        return i;
+                    })
+                    .transition()
+                    .duration(duration)
+                    .style('fill-opacity', 1e-6)
+                    .attr('d', area(d.values))
+                    // identical to the block above minus the remove method
+            });
+
+            svg.select('defs').transition()
+                .duration(duration)
+                .remove();
+
+            g.transition()
+                .duration(duration)
+                .each('end', () => {
+                    d3.select(this).attr('clip-path', null);
+                });
+
+            setTimeout(this.stackedArea, duration + delay);
+        },
+
 
 
 
@@ -450,8 +615,8 @@ window.bitcoin = window.bitcoin || (function(d3) {
                 for(let mm = 0; mm < currency.length; mm++) {
                     // need to put loop in this format to match up the console log currencies and its respective data
                     d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[mm]}?period=monthly&?format=json`, (err, data) => {
-                        console.log(currency[mm]);
-                        console.log(data);
+                        // console.log(currency[mm]);
+                        // console.log(data);
 
                         // nest average price by currency
                         // ???
