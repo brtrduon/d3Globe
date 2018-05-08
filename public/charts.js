@@ -468,7 +468,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
             t.select('text')
                 .attr('transform', (d) => {
                     d = d.values[d.values.length - 1];
-                    return `translate${(w - 60)}, ${y(d.average / 2 + d.average0)})`;
+                    return `translate${(width - 60)}, ${y(d.average / 2 + d.average0)})`;
                 });
 
             setTimeout(this.overlap, duration + delay);
@@ -531,7 +531,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
             t.select('text')
                 .attr('transform', (d) => {
                     d = d.values[d.values.length - 1];
-                    return `translate(${(w - 60)}, ${y(d.average / 2 + d.average0)})`;
+                    return `translate(${(width - 60)}, ${y(d.average / 2 + d.average0)})`;
                 });
 
             setTimeout(this.streamGraph, duration + delay);
@@ -591,6 +591,145 @@ window.bitcoin = window.bitcoin || (function(d3) {
 
             setTimeout(this.stackedArea, duration + delay);
         },
+
+        draw: (k) => {
+            g.each((d) => {
+                var e = d3.select(this);
+
+                y.domain([0, d.maxAverage]);
+
+                e.select('path')
+                    .attr('d', (d) => {
+                        return line(d.values.slice(0, k + 1));
+                    });
+
+                e.selectAll('circle, text')
+                    .data((d) => {
+                        return [d.values[k], d.values[k]];
+                    })
+                    .attr('transform', (d) => {
+                        return `translate(${x(d.time)}, ${y(d.average)})`;
+                    });
+            });
+        },
+
+        lines: () => {
+            k = 1;
+            n = currencies[0].values.length;
+            x = d3.time.scale().range([0, width - 60]);
+            // might need to change the above 'time' var name to something else
+            y = d3.scale.linear().range([height / 4 - 20, 0]);
+
+            // compute min and max date across currencies
+            x.domain([
+                d3.min(currencies, (d) => {
+                    return d.values[0].time;
+                }),
+                d3.max(currencies, (d) => {
+                    return d.values[d.values.length - 1].time;
+                })
+            ]);
+
+            g = svg.selectAll('.currency')
+                .attr('transform', (d, i) => {
+                    return `translate(0${i * height / 4 + 10})`;
+                });
+
+            g.each((d) => {
+                var e = d3.select(this);
+
+                e.append('path')
+                    .attr('class', 'line');
+
+                e.append('circle')
+                    .attr('r', 5)
+                    .style('fill', (d) => {
+                        return color(d.key);
+                    })
+                    .style('stroke', '#000')
+                    .style('stroke-width', '2px');
+
+                e.append('text')
+                    .attr('x', 12)
+                    .attr('dy', '.31em')
+                    .text(d.key);
+            });
+
+            d3.timer(() => {
+                this.draw(k);
+
+                if((k += 2) >= n - 1) {
+                    this.draw(n - 1);
+                    setTimeout(this.horizons, 500);
+
+                    return true;
+                }
+            });
+        },
+
+        horizons: () => {
+            svg.insert('defs', '.currency')
+                .append('clipPath')
+                .attr('id', 'clip')
+                .append('rect')
+                .attr('width', width)
+                .attr('height', height / 4 - 20);
+
+            g = svg.selectAll('.currency')
+                .attr('clip-path', 'url(#clip)');
+
+            area.y0(height / 4 - 20);
+
+            g.select('circle').transition()
+                .duration(duration)
+                .attr('transform', (d) => {
+                    return `translate(${(width - 60)}, ${(-height / 4)})`;
+                })
+                .remove();
+
+            g.select('text').transition()
+                .duration(duration)
+                .attr('transform', (d) => {
+                    return `translate(${width - 60}, ${height / 4 - 20})`;
+                })
+                .attr('dy', '0em');
+
+            g.each((d) => {
+                y.domain([0, d.maxAverage]);
+
+                d3.select(this).selectAll('.area')
+                    .data(d3.range(3))
+                    .enter().insert('path', '.line')
+                    .attr('class', 'area')
+                    .attr('transform', (d) => {
+                        return `translate(0${(d * (height / 4 - 20))})`;
+                    })
+                    .attr('d', area(d.values))
+                    .style('fill', (d, i) => {
+                        return color2(i);
+                    })
+                    .style('fill-opacity', 1e-6);
+
+                y.domain([0, d.maxAverage / 3]);
+
+                d3.select(this).selectAll('.line').transition()
+                    .duration(duration)
+                    .attr('d', line(d.values))
+                    .style('stroke-opacity', 1e-6);
+
+                d3.select(this).selectAll('.area').transition()
+                    .duration(duration)
+                    .style('fill-opacity', 1)
+                    .attr('d', area(d.values))
+                    .each('end', () => {
+                        d3.select(this).style('fill-opacity', null);
+                    });
+            });
+
+            setTimeout(this.areas, duration + delay);
+        },
+
+        
 
 
 
