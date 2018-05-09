@@ -92,6 +92,7 @@ d3.json('world110.json', (err, world) => {
         currency.forEach((k, l) => {
             result[k] = price[l];
         });
+        console.log(result);
         
         // load json containing data for locations' names, coordinates, etc
         // need to make json pull inside blockchain's json pull in order to be able to access blockchain's data
@@ -135,7 +136,7 @@ d3.json('world110.json', (err, world) => {
                     temp[n].price = temp2;
                 }
             }
-            console.log(places.features);
+            // console.log(places.features);
 
             // call the function below
             labels();
