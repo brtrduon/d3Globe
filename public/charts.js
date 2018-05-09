@@ -23,7 +23,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
     var t;
     var stack;
     var currencies;
-    var API = [];
+    // var API = [];
 
     // init d3 stuff to be loaded (?) 
     var svg = d3.select('svg')
@@ -71,25 +71,60 @@ window.bitcoin = window.bitcoin || (function(d3) {
 
         run: () => {
             self = this;
-            // let API = [];
+            var API = [];
             
             d3.json('https://blockchain.info/ticker', (data) => {
-                let currency = [];
+                let stuff = [];
                 
                 for(var ii in data) {
-                    currency.push(ii);
+                    stuff.push(ii);
                 };
+
+                // stuff is an array of currencies that we will work with
                 
-                for(let mm = 0; mm < currency.length; mm++) {
-                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[mm]}?period=monthly&?format=json`, (data) => {
+                for(let mm = 0; mm < stuff.length; mm++) {
+                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${stuff[mm]}?period=monthly&?format=json`, (data) => {
+                        var parse = d3.time.format('%b %Y').parse;
+
                         for(var nn in data) {
-                            data[nn]['money'] = currency[mm];
+                            data[nn]['currency'] = stuff[mm];
                             API.push(data[nn]);
                         }
-                        // console.log(currency[mm]);
+                        // console.log(stuff[mm]);
                         // console.log(data);
-                        
-                        console.log(API);
+
+                        // console.log(API);
+
+                        currencies = d3.nest()
+                            .key((d) => {
+                                return d.currency;
+                            })
+                            .entries(API);
+
+                        currencies.forEach((s) => {
+                            s.values.forEach((d) => {
+                                d.average = +d.average;
+                            });
+                            
+                            s.maxAverage = d3.max(s.values, (d) => {
+                                return d.average;
+                            });
+                            
+                            s.sumAverage = d3.sum(s.values, (d) => {
+                                return d.average;
+                            });
+                        });
+
+                        currencies.sort((a, b) => {
+                            return b.maxAverage - a.maxAverage;
+                        });
+
+                        g = svg.selectAll('g')
+                            .data(currencies)
+                            .enter().append('g')
+                            .attr('class', 'currency');
+
+                        setTimeout(self.lines, duration);
                     });
                 };
             });
