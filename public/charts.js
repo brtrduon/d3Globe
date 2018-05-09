@@ -1,5 +1,5 @@
 window.bitcoin = window.bitcoin || (function(d3) {
-    
+
     // view/graph dimensions (?)
     var m = [20, 20, 30, 20];
     // I have no idea what var m is for
@@ -23,6 +23,7 @@ window.bitcoin = window.bitcoin || (function(d3) {
     var t;
     var stack;
     var currencies;
+    var API = [];
 
     // init d3 stuff to be loaded (?) 
     var svg = d3.select('svg')
@@ -70,19 +71,25 @@ window.bitcoin = window.bitcoin || (function(d3) {
 
         run: () => {
             self = this;
-
+            // let API = [];
+            
             d3.json('https://blockchain.info/ticker', (data) => {
                 let currency = [];
                 
                 for(var ii in data) {
                     currency.push(ii);
                 };
-            
+                
                 for(let mm = 0; mm < currency.length; mm++) {
-                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[mm]}?period=monthly&?format=json`, (err, data) => {
-                        console.log(currency[mm]);
-                        console.log(data[mm]);
-
+                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${currency[mm]}?period=monthly&?format=json`, (data) => {
+                        for(var nn in data) {
+                            data[nn]['money'] = currency[mm];
+                            API.push(data[nn]);
+                        }
+                        // console.log(currency[mm]);
+                        // console.log(data);
+                        
+                        console.log(API);
                     });
                 };
             });
