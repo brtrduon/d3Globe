@@ -36,7 +36,6 @@ window.bitcoin = window.bitcoin || (function(d3) {
     var line = d3.svg.line()
         .interpolate('basis')
         .x(function(d) {
-            // console.log(x(d.time))
             return x(d.time);
         })
         .y(function(d) {
@@ -80,13 +79,12 @@ window.bitcoin = window.bitcoin || (function(d3) {
             n = currencies[0].values.length;
             x = d3.time.scale().range([0, w - 60]);
             y = d3.scale.linear().range([h / 4 - 20, 0]);
-
             x.domain([
                 d3.min(currencies, function(d) {
-                    return d.values[0].date;
+                    return d.values[0].time;
                 }),
                 d3.max(currencies, function(d) {
-                    return d.values[d.values.length - 1].date;
+                    return d.values[d.values.length - 1].time;
                 })
             ]);
 
@@ -127,26 +125,24 @@ window.bitcoin = window.bitcoin || (function(d3) {
             });
         },
 
-        draw: (k) => {
+        draw: function(k) {
             g.each(function(d) {
                 var e = d3.select(this);
                 y.domain([0, d.maxAverage]);
                 
                 e.select('path')
                 .attr('d', function(d) {
-                    // something isn't right here
-                    // console.log(line(d.values))
                     return line(d.values.slice(0, k + 1));
                 });
 
-                // e.selectAll('circle, text')
-                // .data(function(d) {
-                //     return [d.values[k], d.values[k]];
-                // })
-                // .attr('transform', function(d) {
-                //     console.log(`translate(${x(d.time)}, ${y(d.average)})`);
-                //     return `translate(${x(d.time)}, ${y(d.average)})`;
-                // });
+                e.selectAll('circle, text')
+                .data(function(d) {
+                    return [d.values[k], d.values[k]];
+                })
+                .attr('transform', function(d) {
+                    // console.log(`translate(${x(d.time)}, ${y(d.average)})`);
+                    return `translate(${x(d.time)}, ${y(d.average)})`;
+                });
             });
         },
 
