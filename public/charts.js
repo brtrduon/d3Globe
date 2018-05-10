@@ -1,43 +1,37 @@
 window.bitcoin = window.bitcoin || (function(d3) {
 
-    // view/graph dimensions (?)
+    var self = null;
     var m = [20, 20, 30, 20];
-    // I have no idea what var m is for
-    var width = 960 - m[1] - m[3];
-    var height = 500 - m[0] - m[2];
+    var w = 960 - m[1] - m[3];
+    var h = 500 - m[0] - m[2];
     var k = 1;
     var n = 0;
+    var x = null;
+    var x1 = null;
+    var y = null;
     var duration = 1500;
     var delay = 500;
     var color = d3.scale.category10();
-    var color1 = d3.scale.ordinal()
+    var color2 = d3.scale.ordinal()
         .range(['#c6dbef', '#9ecae1', '#6baed6']);
-        // will probably change these colors to something to better suit me
 
-    // initialize variables to be used later
-    var self;
-    var x;
-    var x1;
-    var y;
-    var g;
-    var t;
-    var stack;
-    var currencies;
-    // var API = [];
-
-    // init d3 stuff to be loaded (?) 
-    var svg = d3.select('svg')
-        .attr('width', width + m[1] + m[3])
-        .attr('height', height + m[0] + m[2])
+    var svg = d3.select('body').append('svg')
+        .attr('width', w + m[1] + m[3])
+        .attr('height', h + m[0] + m[2])
         .append('g')
         .attr(`transform`, `translate(${m[3]}, ${m[0]})`);
-
+        
     var pie = d3.layout.pie()
         .value((d) => {
             return d.sumAverage;
         });
 
     var arc = d3.svg.arc();
+    var g = null;
+    var t = null;
+    var stack = null;
+    var currencies = null;
+    var API = [];
 
     var line = d3.svg.line()
         .interpolate('basis')
@@ -51,56 +45,127 @@ window.bitcoin = window.bitcoin || (function(d3) {
     var axis = d3.svg.line()
         .interpolate('basis')
         .x((d) => {
-            return x(d.time);
+            return x(d.date);
         })
-        .y(height);
+        .y(h);
         
     var area = d3.svg.area()
         .interpolate('basis')
         .x((d) => {
-            return x(d.time);
+            return x(d.date);
         })
         .y1((d) => {
             return y(d.average);
         });
+
+        
+
+
+
+
+
+
+
+    
+
+    
     
     // return stuff that we want to be loaded (since the first line of code is a function)
     // we call the function towards the bottom of this file
     return {
+        lines: () => {
+            k = 1;
+            n = currencies[0].values.length;
+            x = d3.time.scale().range([0, w - 60]);
+            y = d3.scale.linear().range([h / 4 - 20, 0]);
+
+            x.domain([
+                d3.min(currencies, (d) => {
+                    return d.values[0].date;
+                }),
+                d3.max(currencies, (d) => {
+                    return d.values[d.values.length - 1].date;
+                })
+            ]);
+
+            g = svg.selectAll('.currency')
+                .attr('transform', (d, i) => {
+                    return `translate(0, ${i * h / 4 + 10})`;
+                });
+
+            console.log(g);
+            g.each((d) => {
+                var e = d3.select(this.bitcoin);
+                
+                e.append('path')
+                .attr('class', 'line');
+
+                e.append('circle')
+                    .attr('r', 5)
+                    .style('fill', (d) => {
+                        return color(d.key);
+                    })
+                    .style('stroke', '#000')
+                    .style('stroke-width', '2px');
+
+                e.append('text')
+                    .attr('x', 12)
+                    .attr('dy', '.31em')
+                    .text(d.key);
+            });
+
+            d3.timer(() => {
+                self.draw(k);
+
+                if((k += 2) >= n - 1) {
+                    self.draw(n - 1);
+                    setTimeout(self.lines, 500);
+
+                    return true;
+                }
+            });
+        },
+
+        draw: (k) => {
+            g.each((d) => {
+                var e = d3.select(this.bitcoin);
+                y.domain([0, d.maxAverage]);
+                
+                e.select('path')
+                .attr('d', (d) => {
+                    return line(d.values.slice(0, k + 1));
+                });
+
+                e.selectAll('circle, text')
+                .data((d) => {
+                    return [d.values[k], d.values[k]];
+                })
+                .attr('transform', (d) => {
+                    return `translate(${x(d.time)}, ${y(d.average)})`;
+                });
+            });
+        },
 
 
         run: () => {
-            self = this;
-            var API = [];
+            self = this.bitcoin;
+            let stuff = ["USD", "AUD"];
+            // stuff is an array of currencies that we will work with
             
-            d3.json('https://blockchain.info/ticker', (data) => {
-                let stuff = [];
-                
-                for(var ii in data) {
-                    stuff.push(ii);
-                };
+            for(let mm = 0; mm < stuff.length; mm++) {
+                d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${stuff[mm]}?period=monthly&?format=json`, (data) => {
 
-                // stuff is an array of currencies that we will work with
-                
-                for(let mm = 0; mm < stuff.length; mm++) {
-                    d3.json(`https://apiv2.bitcoinaverage.com/indices/global/history/BTC${stuff[mm]}?period=monthly&?format=json`, (data) => {
-                        var parse = d3.time.format('%b %Y').parse;
+                    for(var nn in data) {
+                        data[nn]['currency'] = stuff[mm];
+                        API.push(data[nn]);
+                    }
 
-                        for(var nn in data) {
-                            data[nn]['currency'] = stuff[mm];
-                            API.push(data[nn]);
-                        }
-                        // console.log(stuff[mm]);
-                        // console.log(data);
-
-                        // console.log(API);
-
-                        currencies = d3.nest()
-                            .key((d) => {
-                                return d.currency;
-                            })
-                            .entries(API);
-
+                    currencies = d3.nest()
+                        .key((d) => {
+                            return d.currency;
+                        })
+                        .entries(API);
+                        
                         currencies.forEach((s) => {
                             s.values.forEach((d) => {
                                 d.average = +d.average;
@@ -114,22 +179,21 @@ window.bitcoin = window.bitcoin || (function(d3) {
                                 return d.average;
                             });
                         });
-
+                        
                         currencies.sort((a, b) => {
                             return b.maxAverage - a.maxAverage;
                         });
+                        
+                    g = svg.selectAll('g')
+                        .data(currencies)
+                        .enter().append('g')
+                        .attr('class', 'currency');
 
-                        g = svg.selectAll('g')
-                            .data(currencies)
-                            .enter().append('g')
-                            .attr('class', 'currency');
-
-                        setTimeout(self.lines, duration);
-                    });
+                    setTimeout(self.lines, duration);
+                });
                 };
-            });
+            }
         }
-    }
 }(d3));
 
 window.document.addEventListener('DOMContentLoaded', (e) => {
